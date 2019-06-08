@@ -1,0 +1,21 @@
+server:
+  port: 8088
+
+spring:
+  profiles:
+    active: dev
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+
+mybatis:
+  config-location: classpath:mybatis-config.xml
+  mapper-locations: classpath:mapper/*.xml
+
+dist:
+  info:
+    httpServer: 127.0.0.1
+    httpPort: 8000
+    nettyServer: localhost
+    nettyPort: 8899
+  zookeeper: localhost:2181
