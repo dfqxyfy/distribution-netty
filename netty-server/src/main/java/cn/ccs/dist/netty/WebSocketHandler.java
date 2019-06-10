@@ -2,6 +2,7 @@ package cn.ccs.dist.netty;
 
 import cn.ccs.dist.component.SpringUtils;
 import cn.ccs.dist.reg.entity.RegInfoProperties;
+import cn.ccs.dist.reg.redis.RegUserService;
 import cn.ccs.dist.reg.zookeeper.RegClient;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -14,9 +15,13 @@ import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     WebSocketServerHandshaker handshaker;
+
+    private static final ConcurrentHashMap<String,ChannelHandlerContext> CTXMAP = new ConcurrentHashMap<>();
 
 
 
@@ -46,20 +51,28 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         System.out.println("handlerAdded!!!");
         final RegClient regClient = SpringUtils.getApplicationContext().getBean(RegClient.class);
         regClient.addReg();
+        final RegUserService regUserService = SpringUtils.getApplicationContext().getBean(RegUserService.class);
+        regUserService.regServer(ctx.channel().attr(USER_KEY).get());
     }
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
         System.out.println("handlerRemoved!!!");
         final RegClient regClient = SpringUtils.getApplicationContext().getBean(RegClient.class);
+        CTXMAP.remove(ctx.channel().attr(USER_KEY).get());
         regClient.delReg();
+        final RegUserService regUserService = SpringUtils.getApplicationContext().getBean(RegUserService.class);
+        regUserService.unRegServer(ctx.channel().attr(USER_KEY).get());
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
+        CTXMAP.remove(ctx.channel().attr(USER_KEY).get());
         final RegClient regClient = SpringUtils.getApplicationContext().getBean(RegClient.class);
         regClient.addReg();
+        final RegUserService regUserService = SpringUtils.getApplicationContext().getBean(RegUserService.class);
+        regUserService.unRegServer(ctx.channel().attr(USER_KEY).get());
     }
 
 
@@ -71,6 +84,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             if (userIdStr == null) {
                 return;
             }
+            CTXMAP.put(userIdStr,ctx);
             ctx.channel().attr(USER_KEY).set(userIdStr);
             if (request.decoderResult().isSuccess() && "websocket".equals(request.headers().get("Upgrade"))) {
                 WebSocketServerHandshakerFactory factory = new WebSocketServerHandshakerFactory("wss://" + request.headers().get("Host") + "/websocket", null, false);
@@ -125,6 +139,10 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         final TextWebSocketFrame o = new TextWebSocketFrame(text);
         ctx.channel().write(o);
         ctx.flush();
+    }
+
+    public static void send(String userId,String msg){
+        CTXMAP.get(userId).writeAndFlush(msg);
     }
 
 }
