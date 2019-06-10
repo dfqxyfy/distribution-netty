@@ -1,5 +1,5 @@
 server:
-  port: 8088
+  port: 8188
 
 spring:
   profiles:
@@ -16,6 +16,6 @@ dist:
   info:
     httpServer: 127.0.0.1
     httpPort: 8000
-    nettyServer: localhost
-    nettyPort: 8899
+    nettyServer: localhost22
+    nettyPort: 9999
   zookeeper: localhost:2181

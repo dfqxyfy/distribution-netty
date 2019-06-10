@@ -8,6 +8,7 @@ import org.I0Itec.zkclient.IZkDataListener;
 import org.I0Itec.zkclient.ZkClient;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.TreeMap;
@@ -15,12 +16,12 @@ import java.util.TreeMap;
 /**
  * Created by szekinwin on 2017/7/8.
  */
-@Configuration
+@Component
 public class RegClient {
 
     private RegInfoProperties regInfo;
     //zookeeper连接地址
-    private static final String CONNECT_ADR="localhost:2181";
+    private static final String CONNECT_ADR="172.16.117.16:2181";
 
     //5000，连接超时时间
     static final ZkClient zkClient = new ZkClient(CONNECT_ADR,5000);
@@ -28,6 +29,7 @@ public class RegClient {
     private String basServerPath;
 
     public RegClient(RegInfoProperties regInfo) {
+        System.out.println("constructer ....");
         this.regInfo = regInfo;
     }
     public void init(){
@@ -50,8 +52,10 @@ public class RegClient {
         List<String> children = zkClient.getChildren("/servers");
         TreeMap<Integer,String> map  = new TreeMap<>();
         for(int i=0;i<children.size();i++){
-            Object nums = zkClient.readData("/servers/"+children.get(i) + "/nums");
-            map.put((int)nums,zkClient.readData("/servers/"+children.get(i)+"/serverInfo"));
+            if(zkClient.exists("/servers/" +children.get(i) + "/status")) {
+                Object nums = zkClient.readData("/servers/" + children.get(i) + "/nums");
+                map.put((int) nums, zkClient.readData("/servers/" + children.get(i) + "/serverInfo"));
+            }
         }
         return JSON.toJSONString(map.get(map.firstKey()));
     }

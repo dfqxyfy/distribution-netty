@@ -12,11 +12,7 @@
     <artifactId>netty-server</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>com.ccs.dist</groupId>
-            <artifactId>ip-dist</artifactId>
-            <version>1.0</version>
-        </dependency>
+
 
         <dependency>
             <groupId>com.alibaba</groupId>
